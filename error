@@ -1,28 +1,89 @@
----------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[56], line 16
-     13 target_files_test_rename = [f for f in pt_files_test_rename if f.startswith('normalized_target')]
-     15 # 排序文件列表
----> 16 sorted_input_files_test_rename = sorted(input_files_test_rename, key=get_file_number)
-     17 sorted_target_files_test_rename = sorted(target_files_test_rename, key=get_file_number)
-     19 # 确保 input 和 target 文件是一一对应的
+target_mean=837.4973
+target_std=617.3029
+best_model = torch.load('best_model_1_1.pth')  
+net.load_state_dict(best_model)  
+net.eval()  
 
-Cell In[56], line 8, in get_file_number(filename)
-      7 def get_file_number(filename):
-----> 8     match = re.search(r'(\d+)', filename)
-      9     return int(match.group(1)) if match else -1
+# Step 2: 加载 input{i}.pt 和 target{i}.pt 文件夹中的所有文件
+test_folder = r'C:\Users\wang.zhuo17\ENGINE_normalized_data_shuffled\test'  # 输入文件所在目录
+input_files = sorted([f for f in os.listdir(test_folder) if f.startswith('input') and f.endswith('.pt')])  # 查找所有 input{i}.pt 文件
+target_files = sorted([f for f in os.listdir(test_folder) if f.startswith('output') and f.endswith('.pt')])  # 查找所有 target{i}.pt 文件
 
-NameError: name 're' is not defined
+# # Step 3: 只处理前 600 个文件
+# input_files = input_files[:600]  # 只选择前 600 个 input 文件
+# target_files = target_files[:600]  # 只选择前 600 个 target 文件
+
+# Step 4: 初始化保存结果的列表
+A_values = []  # 用于存储 A 值
+predicted_outputs = []  # 用于存储预测结果
+true_outputs = []  # 用于存储真实结果
+
+# Step 5: 逐个加载 input 和 target 文件，进行预测并计算 A
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+net.to(device)  # 确保模型在正确的设备上
+
+for input_file, target_file in zip(input_files, target_files):
+    # 加载输入和目标张量
+    input_tensor = torch.load(os.path.join(test_folder, input_file)).to(device)
+    output_tensor = torch.load(os.path.join(test_folder, target_file)).to(device)
+    
+    # 进行预测
+    with torch.no_grad():
+        predicted_output = (net(input_tensor.unsqueeze(0) * target_std)) + target_mean  # 预测结果
+        output_tensor = output_tensor * target_std + target_mean  # 转换目标张量到原始尺度
+    
+    # 计算 A 值
+    A = (output_tensor - predicted_output) / output_tensor  # A 计算公式
+
+    # 将预测结果、真实结果和 A 值转回 CPU 并转为 NumPy 数组 (去除 batch 维度)
+    predicted_outputs.append(predicted_output.squeeze().cpu().numpy())  # 去掉 batch 维度，得到 (20, 20)
+    true_outputs.append(output_tensor.squeeze().cpu().numpy())  # 去掉 batch 维度，得到 (20, 20)
+    A_values.append(A.squeeze().cpu().numpy())  # 计算 A 值，并去掉 batch 维度，得到 (20, 20)
+
+# Step 6: 将结果转换为 NumPy 数组，形状应为 (600, 20, 20)
+predicted_outputs = np.array(predicted_outputs)  # 形状为 (600, 20, 20)
+true_outputs = np.array(true_outputs)  # 形状为 (600, 20, 20)
+A_matrix = np.array(A_values)  # 形状为 (600, 20, 20)
+
+# 打印输出的形状
+print(f"Predicted outputs shape: {predicted_outputs.shape}")  # 打印预测输出的形状
+print(f"True outputs shape: {true_outputs.shape}")  # 打印真实输出的形状
+print(f"A matrix shape: {A_matrix.shape}")  # 打印 A 的形状
+
+# Step 7: 输出最后一个预测结果和真实结果
+print(f"Last predicted_output: {predicted_outputs[-1]}")  # 打印最后一个预测结果
+print(f"Last true output_tensor: {true_outputs[-1]}")  # 打印最后一个真实结果
+print(f"Last A: {A_matrix[-1]}")  # 打印最后一个 A 值
 
 
 
----------------------------------------------------------------------------
-OSError                                   Traceback (most recent call last)
-Cell In[57], line 4
-      1 test_dir_val_rename = r'CF:\ptdatav2\1500v2_nor\val'  # 根据实际情况修改
-      3 # 获取目录下的所有 .pt 文件
-----> 4 pt_files_val_rename = [f for f in os.listdir(test_dir_val_rename) if f.endswith('.pt')]
-      6 # 按照文件名中的数字排序
-      7 def get_file_number(filename):
 
-OSError: [WinError 123] 文件名、目录名或卷标语法不正确。: 'CF:\\ptdatav2\\1500v2_nor\\val'
+
+# Step 1: 加载训练好的模型
+best_model = torch.load('best_model_1_1.pth')  # 假设 'best_model.pth' 是你保存的最佳模型
+net.load_state_dict(best_model)  # 将模型参数加载到模型中
+net.eval()  # 设置模型为评估模式
+
+# Step 2: 加载 input2.pt 和 output2.pt
+input_tensor = torch.load(r'C:\Users\wang.zhuo17\ENGINE_normalized_data_shuffled\test\input-1.pt')  # 加载 input2.pt
+output_tensor = torch.load(r'C:\Users\wang.zhuo17\ENGINE_normalized_data_shuffled\test\output-1.pt')  # 加载 output2.pt
+
+# 检查输入张量的形状
+print(f"Input tensor shape: {input_tensor.shape}")
+print(f"Output tensor shape: {output_tensor.shape}")
+
+# 将输入张量转移到正确的设备上 (GPU 或 CPU)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+input_tensor = input_tensor.to(device)
+output_tensor = output_tensor.to(device)
+net.to(device)  # 确保模型也在相同设备上
+
+# Step 3: 对 input2.pt 进行预测
+with torch.no_grad():  # 禁用梯度计算，因为我们只做推理
+    predicted_output = net(input_tensor.unsqueeze(0))  # 假设输入是 [batch_size, channels, height, width]
+    
+# 打印预测结果
+print(f"Predicted output: {predicted_output}")
+
+Predicted_output_reverse=predicted_output * target_std + target_mean
+Predicted_output_reverse
