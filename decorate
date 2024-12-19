@@ -62,38 +62,50 @@ print(f"R²: {r2.item()}")
 
 
 
-(dl_1) C:\Users\wang.zhuo17>pip install sklearn -i http://hub.byd.com:9081/repository/pip-proxy-aliyun/simple --trusted-host hub.byd.com
-Looking in indexes: http://hub.byd.com:9081/repository/pip-proxy-aliyun/simple
-Collecting sklearn
-  Downloading http://hub.byd.com:9081/repository/pip-proxy-aliyun/packages/46/1c/395a83ee7b2d2ad7a05b453872053d41449564477c81dc356f720b16eac4/sklearn-0.0.post12.tar.gz (2.6 kB)
-  Preparing metadata (setup.py) ... error
-  error: subprocess-exited-with-error
+import torch
+import os
+import numpy as np
 
-  × python setup.py egg_info did not run successfully.
-  │ exit code: 1
-  ╰─> [15 lines of output]
-      The 'sklearn' PyPI package is deprecated, use 'scikit-learn'
-      rather than 'sklearn' for pip commands.
+# Step 1: 加载训练好的模型
+best_model = torch.load('best_model_1_1.pth')  # 假设 'best_model.pth' 是你保存的最佳模型
+net.load_state_dict(best_model)  # 将模型参数加载到模型中
+net.eval()  # 设置模型为评估模式
 
-      Here is how to fix this error in the main use cases:
-      - use 'pip install scikit-learn' rather than 'pip install sklearn'
-      - replace 'sklearn' by 'scikit-learn' in your pip requirements files
-        (requirements.txt, setup.py, setup.cfg, Pipfile, etc ...)
-      - if the 'sklearn' package is used by one of your dependencies,
-        it would be great if you take some time to track which package uses
-        'sklearn' instead of 'scikit-learn' and report it to their issue tracker
-      - as a last resort, set the environment variable
-        SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True to avoid this error
+# Step 2: 加载 input{i}.pt 和 target{i}.pt 文件夹中的所有文件
+test_folder = r'C:\Users\wang.zhuo17\ENGINE_normalized_data_shuffled\test'  # 输入文件所在目录
+input_files = sorted([f for f in os.listdir(test_folder) if f.startswith('input') and f.endswith('.pt')])  # 查找所有 input{i}.pt 文件
+target_files = sorted([f for f in os.listdir(test_folder) if f.startswith('target') and f.endswith('.pt')])  # 查找所有 target{i}.pt 文件
 
-      More information is available at
-      https://github.com/scikit-learn/sklearn-pypi-package
-      [end of output]
+# Step 3: 初始化用于保存所有计算结果的列表
+A_values = []  # 用于存储所有 A 值
 
-  note: This error originates from a subprocess, and is likely not a problem with pip.
-error: metadata-generation-failed
+# Step 4: 逐个加载 input 和 target 文件，进行预测并计算 A
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+net.to(device)  # 确保模型在正确的设备上
 
-× Encountered error while generating package metadata.
-╰─> See above for output.
+for input_file, target_file in zip(input_files, target_files):
+    # 加载输入和目标张量
+    input_tensor = torch.load(os.path.join(test_folder, input_file)).to(device)
+    output_tensor = torch.load(os.path.join(test_folder, target_file)).to(device)
+    
+    # 进行预测
+    with torch.no_grad():
+        predicted_output = (net(input_tensor.unsqueeze(0)) * target_std) + target_mean  # 预测结果
+        output_tensor = output_tensor * target_std + target_mean  # 转换目标张量到原始尺度
+    
+    # 计算 A 值
+    A = (output_tensor - predicted_output) / output_tensor
+    A_values.append(A.cpu().numpy())  # 将 A 添加到列表中并转回 CPU
 
-note: This is an issue with the package mentioned above, not pip.
-hint: See above for details.
+# Step 5: 转换 A_values 为 NumPy 数组，方便后续分析
+A_matrix = np.array(A_values)
+
+# 打印或保存结果
+print(f"A matrix shape: {A_matrix.shape}")  # 打印 A 的维度
+
+# 如果你需要保存到文件中，可以使用 numpy 保存到文件：
+np.save('A_matrix.npy', A_matrix)  # 将 A 保存为 numpy 格式
+
+# 也可以打印或分析矩阵 A 中的统计信息：
+print(f"Mean of A: {A_matrix.mean()}")
+print(f"Standard Deviation of A: {A_matrix.std()}")
