@@ -56,19 +56,42 @@ ss_residual = torch.sum((y_true - y_pred) ** 2)  # 残差平方和
 r2 = 1 - (ss_residual / ss_total)  # R²公式
 print(f"R²: {r2.item()}")
 🍕🍔🍟🌭🍿🧂🥓🥚🥯🥨🥐🍞🧈🥞🧇🍳🥖🧀🥗🥙🥙🥪🍱🍣🥠🦪🍜🥟🥩🍛🍠🍚🍙🍗🍘🍖
-import torch
-import os
-import numpy as np
 
-# Step 1: 加载训练好的模型
-best_model = torch.load('best_model_1_1.pth')  # 假设 'best_model.pth' 是你保存的最佳模型
-net.load_state_dict(best_model)  # 将模型参数加载到模型中
-net.eval()  # 设置模型为评估模式
+test_loader_iter = DataLoader(dataset=test_dataset_, batch_size=256, shuffle=False,drop_last=True)   看每个batch的文件名
+
+# Step 2: Load the best model state
+best_model = torch.load('best_model.pth')
+
+# Step 3: Load state dict into the model
+net.load_state_dict(best_model)
+
+# Step 4: Set the model to evaluation mode
+net.eval()
+
+# Step 5: Evaluate on the test set
+test_loss = 0.0
+
+with torch.no_grad():
+    for X_test, y_test in test_loader_iter:
+        outputs = net(X_test)
+        test_loss += loss(outputs, y_test).item() * X_test.size(0)
+
+# Calculate average test loss
+test_loss = test_loss / len(test_loader_iter.dataset)
+
+print(f'Test Loss: {test_loss:.4f}')  这样输出的是第几个batch
+
+
+
+🍕🍔🍟🌭🍿🧂🥓🥚🥯🥨🥐🍞🧈🥞🧇🍳🥖🧀🥗🥙🥙🥪🍱🍣🥠🦪🍜🥟🥩🍛🍠🍚🍙🍗🍘🍖
+best_model = torch.load('best_model_1_1.pth')  
+net.load_state_dict(best_model)  
+net.eval()  
 
 # Step 2: 加载 input{i}.pt 和 target{i}.pt 文件夹中的所有文件
 test_folder = r'C:\Users\wang.zhuo17\ENGINE_normalized_data_shuffled\test'  # 输入文件所在目录
 input_files = sorted([f for f in os.listdir(test_folder) if f.startswith('input') and f.endswith('.pt')])  # 查找所有 input{i}.pt 文件
-target_files = sorted([f for f in os.listdir(test_folder) if f.startswith('target') and f.endswith('.pt')])  # 查找所有 target{i}.pt 文件
+target_files = sorted([f for f in os.listdir(test_folder) if f.startswith('output') and f.endswith('.pt')])  # 查找所有 target{i}.pt 文件
 
 # Step 3: 只处理前 600 个文件
 input_files = input_files[:600]  # 只选择前 600 个 input 文件
@@ -90,7 +113,7 @@ for input_file, target_file in zip(input_files, target_files):
     
     # 进行预测
     with torch.no_grad():
-        predicted_output = (net(input_tensor.unsqueeze(0)) * target_std) + target_mean  # 预测结果
+        predicted_output = (net(input_tensor.unsqueeze(0) * target_std)) + target_mean  # 预测结果
         output_tensor = output_tensor * target_std + target_mean  # 转换目标张量到原始尺度
     
     # 计算 A 值
@@ -115,8 +138,3 @@ print(f"A matrix shape: {A_matrix.shape}")  # 打印 A 的形状
 print(f"Last predicted_output: {predicted_outputs[-1]}")  # 打印最后一个预测结果
 print(f"Last true output_tensor: {true_outputs[-1]}")  # 打印最后一个真实结果
 print(f"Last A: {A_matrix[-1]}")  # 打印最后一个 A 值
-
-# 保存结果到文件
-np.save('predicted_outputs.npy', predicted_outputs)  # 保存预测结果
-np.save('true_outputs.npy', true_outputs)  # 保存真实结果
-np.save('A_matrix.npy', A_matrix)  # 保存 A 矩阵
