@@ -59,3 +59,41 @@ ss_residual = torch.sum((y_true - y_pred) ** 2)  # 残差平方和
 
 r2 = 1 - (ss_residual / ss_total)  # R²公式
 print(f"R²: {r2.item()}")
+
+
+
+(dl_1) C:\Users\wang.zhuo17>pip install sklearn -i http://hub.byd.com:9081/repository/pip-proxy-aliyun/simple --trusted-host hub.byd.com
+Looking in indexes: http://hub.byd.com:9081/repository/pip-proxy-aliyun/simple
+Collecting sklearn
+  Downloading http://hub.byd.com:9081/repository/pip-proxy-aliyun/packages/46/1c/395a83ee7b2d2ad7a05b453872053d41449564477c81dc356f720b16eac4/sklearn-0.0.post12.tar.gz (2.6 kB)
+  Preparing metadata (setup.py) ... error
+  error: subprocess-exited-with-error
+
+  × python setup.py egg_info did not run successfully.
+  │ exit code: 1
+  ╰─> [15 lines of output]
+      The 'sklearn' PyPI package is deprecated, use 'scikit-learn'
+      rather than 'sklearn' for pip commands.
+
+      Here is how to fix this error in the main use cases:
+      - use 'pip install scikit-learn' rather than 'pip install sklearn'
+      - replace 'sklearn' by 'scikit-learn' in your pip requirements files
+        (requirements.txt, setup.py, setup.cfg, Pipfile, etc ...)
+      - if the 'sklearn' package is used by one of your dependencies,
+        it would be great if you take some time to track which package uses
+        'sklearn' instead of 'scikit-learn' and report it to their issue tracker
+      - as a last resort, set the environment variable
+        SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True to avoid this error
+
+      More information is available at
+      https://github.com/scikit-learn/sklearn-pypi-package
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
