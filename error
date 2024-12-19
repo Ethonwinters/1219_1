@@ -87,3 +87,7 @@ print(f"Predicted output: {predicted_output}")
 
 Predicted_output_reverse=predicted_output * target_std + target_mean
 Predicted_output_reverse
+
+for i in range (predicted_outputs.shape[0]):
+    if predicted_outputs.shape[i] ==Predicted_output_reverse:
+        print(i=)
