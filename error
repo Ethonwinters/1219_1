@@ -1,0 +1,28 @@
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[56], line 16
+     13 target_files_test_rename = [f for f in pt_files_test_rename if f.startswith('normalized_target')]
+     15 # 排序文件列表
+---> 16 sorted_input_files_test_rename = sorted(input_files_test_rename, key=get_file_number)
+     17 sorted_target_files_test_rename = sorted(target_files_test_rename, key=get_file_number)
+     19 # 确保 input 和 target 文件是一一对应的
+
+Cell In[56], line 8, in get_file_number(filename)
+      7 def get_file_number(filename):
+----> 8     match = re.search(r'(\d+)', filename)
+      9     return int(match.group(1)) if match else -1
+
+NameError: name 're' is not defined
+
+
+
+---------------------------------------------------------------------------
+OSError                                   Traceback (most recent call last)
+Cell In[57], line 4
+      1 test_dir_val_rename = r'CF:\ptdatav2\1500v2_nor\val'  # 根据实际情况修改
+      3 # 获取目录下的所有 .pt 文件
+----> 4 pt_files_val_rename = [f for f in os.listdir(test_dir_val_rename) if f.endswith('.pt')]
+      6 # 按照文件名中的数字排序
+      7 def get_file_number(filename):
+
+OSError: [WinError 123] 文件名、目录名或卷标语法不正确。: 'CF:\\ptdatav2\\1500v2_nor\\val'
