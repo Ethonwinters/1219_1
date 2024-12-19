@@ -87,7 +87,10 @@ print(f"Predicted output: {predicted_output}")
 
 Predicted_output_reverse=predicted_output * target_std + target_mean
 Predicted_output_reverse
+import numpy as np
 
-for i in range (predicted_outputs.shape[0]):
-    if predicted_outputs.shape[i] ==Predicted_output_reverse:
-        print(i=)
+# 假设 predicted_outputs 和 Predicted_output_reverse 都是 numpy 数组
+for i in range(predicted_outputs.shape[0]):  # 遍历每个样本（假设是 600 个样本）
+    # 使用 np.allclose 来进行容差比较，避免浮动误差
+    if np.allclose(predicted_outputs[i], Predicted_output_reverse, atol=1e-6):
+        print(f"Found matching index: {i}")
